@@ -15,8 +15,8 @@ set_interface_property sys_rst EXPORT_OF sys_clk.clk_in_reset
 add_instance sys_hps altera_hps
 set_instance_parameter_value sys_hps {MPU_EVENTS_Enable} {0}
 set_instance_parameter_value sys_hps {F2SCLK_SDRAMCLK_Enable} {0}
-set_instance_parameter_value sys_hps {F2SDRAM_Type} {AXI-3 AXI-3}
-set_instance_parameter_value sys_hps {F2SDRAM_Width} {64 64}
+set_instance_parameter_value sys_hps {F2SDRAM_Type} {AXI-3}
+set_instance_parameter_value sys_hps {F2SDRAM_Width} {128}
 set_instance_parameter_value sys_hps {F2SINTERRUPT_Enable} {1}
 set_instance_parameter_value sys_hps {EMAC0_PinMuxing} {Unused}
 set_instance_parameter_value sys_hps {EMAC0_Mode} {N/A}
@@ -129,9 +129,20 @@ proc ad_cpu_interconnect {m_base m_port} {
   set_connection_parameter_value sys_hps.h2f_lw_axi_master/${m_port} baseAddress ${m_base}
 }
 
-proc ad_dma_interconnect {m_port m_id} {
+proc ad_dma_interconnect {m_port m_clk m_id} {
 
-  # one must manually create a new(e.g. 3'rd) f2h_sdram port in order to use it
+  set sdram_type_p [get_instance_parameter_value sys_hps {F2SDRAM_Type}]
+  set sdram_width_p [get_instance_parameter_value sys_hps {F2SDRAM_Width}]
+  set sdram_nr [llength $sdram_type_p]
+
+  for {set i $sdram_nr} {$i <= $m_id} {incr i} {
+    append sdram_type_p " AXI-3"
+    append sdram_width_p " 128"
+  }
+  set_instance_parameter_value sys_hps {F2SDRAM_Type} ${sdram_type_p}
+  set_instance_parameter_value sys_hps {F2SDRAM_Width} ${sdram_width_p}
+
+  add_connection $m_clk sys_hps.f2h_sdram${m_id}_clock
   add_connection ${m_port} sys_hps.f2h_sdram${m_id}_data
   set_connection_parameter_value ${m_port}/sys_hps.f2h_sdram${m_id}_data baseAddress {0x0000}
 }
@@ -141,7 +152,6 @@ proc ad_dma_interconnect {m_port m_id} {
 add_instance sys_dma_clk clock_source
 add_connection sys_hps.h2f_user0_clock sys_dma_clk.clk_in
 add_connection sys_clk.clk_reset sys_dma_clk.clk_in_reset
-add_connection sys_dma_clk.clk sys_hps.f2h_sdram1_clock
 
 # internal memory
 
@@ -283,7 +293,7 @@ set_instance_parameter_value video_dmac {CYCLIC} {1}
 set_instance_parameter_value video_dmac {HAS_AXIS_TLAST} {1}
 set_instance_parameter_value video_dmac {DMA_2D_TRANSFER} {1}
 set_instance_parameter_value video_dmac {DMA_DATA_WIDTH_DEST} {64}
-set_instance_parameter_value video_dmac {DMA_DATA_WIDTH_SRC} {64}
+set_instance_parameter_value video_dmac {DMA_DATA_WIDTH_SRC} {128}
 set_instance_parameter_value video_dmac {DMA_LENGTH_WIDTH} {24}
 set_instance_parameter_value video_dmac {DMA_TYPE_DEST} {1}
 set_instance_parameter_value video_dmac {DMA_TYPE_SRC} {0}
@@ -299,7 +309,6 @@ add_connection sys_clk.clk           axi_hdmi_tx_0.s_axi_clock
 add_connection sys_clk.clk           video_dmac.s_axi_clock
 add_connection pixel_clk_pll.outclk1 video_dmac.m_src_axi_clock
 add_connection pixel_clk_pll.outclk1 video_dmac.if_m_axis_aclk
-add_connection pixel_clk_pll.outclk1 sys_hps.f2h_sdram0_clock
 add_connection pixel_clk_pll.outclk1 axi_hdmi_tx_0.vdma_clock
 add_connection pixel_clk_pll.outclk0 axi_hdmi_tx_0.hdmi_clock
 
@@ -331,4 +340,4 @@ ad_cpu_interconnect 0x0010A000 ltc2308_spi.spi_control_port
 
 # dma interconnects
 
-ad_dma_interconnect video_dmac.m_src_axi 0
+ad_dma_interconnect video_dmac.m_src_axi pixel_clk_pll.outclk1 0
