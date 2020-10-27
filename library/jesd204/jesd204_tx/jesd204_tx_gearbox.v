@@ -44,104 +44,101 @@
 
 `timescale 1ns/100ps
 
-module jesd204_up_sysref #(
-  parameter DATA_PATH_WIDTH_LOG2 = 2
+// Constraints:
+//   - IN_DATA_PATH_WIDTH >= OUT_DATA_PATH_WIDTH
+//
+
+module jesd204_tx_gearbox #(
+  parameter IN_DATA_PATH_WIDTH = 6,
+  parameter OUT_DATA_PATH_WIDTH = 4,
+  parameter NUM_LANES = 1,
+  parameter DEPTH = 16
 ) (
-  input up_clk,
-  input up_reset,
-
-  input core_clk,
-
+  input link_clk,
+  input reset,
   input device_clk,
-
-  input [11:0] up_raddr,
-  output reg [31:0] up_rdata,
-
-  input up_wreq,
-  input [11:0] up_waddr,
-  input [31:0] up_wdata,
-
-  input up_cfg_is_writeable,
-
-  output reg up_cfg_sysref_oneshot,
-  output reg [7:0] up_cfg_lmfc_offset,
-  output reg up_cfg_sysref_disable,
-
-  input device_event_sysref_alignment_error,
-  input device_event_sysref_edge
+  input device_reset,
+  input [NUM_LANES*IN_DATA_PATH_WIDTH*8-1:0] device_data,
+  input device_lmfc_edge,
+  output [NUM_LANES*OUT_DATA_PATH_WIDTH*8-1:0] link_data,
+  input output_ready
 );
 
-reg [1:0] up_sysref_status;
-reg [1:0] up_sysref_status_clear;
-wire [1:0] up_sysref_event;
+localparam MEM_W = IN_DATA_PATH_WIDTH*8*NUM_LANES;
+localparam D_LOG2 = $clog2(DEPTH);
 
-sync_event #(
-  .NUM_OF_EVENTS(2)
-) i_cdc_sysref_event (
-  .in_clk(device_clk),
-  .in_event({
-    device_event_sysref_alignment_error,
-    device_event_sysref_edge
-  }),
-  .out_clk(up_clk),
-  .out_event(up_sysref_event)
+reg [MEM_W-1:0] mem [0:DEPTH-1];
+reg [D_LOG2-1:0]  in_addr ='h00;
+reg [D_LOG2-1:0]  out_addr = 'b0;
+reg               mem_rd_valid = 'b0;
+reg [MEM_W-1:0]  mem_rd_data;
+
+wire                mem_wr_en = 1'b1;
+wire                mem_rd_en;
+wire [D_LOG2-1:0]  in_out_addr;
+wire [D_LOG2-1:0]  out_in_addr;
+wire [NUM_LANES-1:0] unpacker_ready;
+wire output_ready_sync;
+
+sync_bits i_sync_ready (
+  .in_bits(output_ready),
+  .out_resetn(~device_reset),
+  .out_clk(device_clk),
+  .out_bits(output_ready_sync)
 );
 
-always @(posedge up_clk) begin
-  if (up_reset == 1'b1) begin
-    up_sysref_status <= 2'b00;
-  end else begin
-    up_sysref_status <= (up_sysref_status & ~up_sysref_status_clear) | up_sysref_event;
+always @(posedge device_clk) begin
+  if (device_lmfc_edge & ~output_ready_sync) begin
+    in_addr <= 'h01;
+  end else if (mem_wr_en) begin
+    in_addr <= in_addr + 1;
   end
 end
 
-always @(*) begin
-  case (up_raddr)
-  /* JESD SYSREF configuraton */
-  12'h040: up_rdata = {
-    /* 02-31 */ 30'h00, /* Reserved for future use */
-    /*    01 */ up_cfg_sysref_oneshot,
-    /*    00 */ up_cfg_sysref_disable
-  };
-  12'h041: up_rdata = {
-    /* 10-31 */ 22'h00, /* Reserved for future use */
-    /* 02-09 */ up_cfg_lmfc_offset,
-    /* 00-01 */ 2'b00 /* data path alignment for cfg_lmfc_offset */
-  };
-  12'h042: up_rdata = {
-    /* 02-31 */ 30'h00,
-    /* 00-01 */ up_sysref_status
-  };
-  default: up_rdata = 32'h00000000;
-  endcase
-end
-
-always @(posedge up_clk) begin
-  if (up_reset == 1'b1) begin
-    up_cfg_sysref_oneshot <= 1'b0;
-    up_cfg_lmfc_offset <= 'h00;
-    up_cfg_sysref_disable <= 1'b0;
-  end else if (up_wreq == 1'b1 && up_cfg_is_writeable == 1'b1) begin
-    case (up_waddr)
-    /* JESD SYSREF configuraton */
-    12'h040: begin
-      up_cfg_sysref_oneshot <= up_wdata[1];
-      up_cfg_sysref_disable <= up_wdata[0];
-    end
-    12'h041: begin
-      /* Must be aligned to data path width */
-      up_cfg_lmfc_offset <= up_wdata;
-    end
-    endcase
+always @(posedge device_clk) begin
+  if (mem_wr_en) begin
+    mem[in_addr] <= device_data;
   end
 end
 
-always @(*) begin
-  if (up_wreq == 1'b1 && up_waddr == 12'h042) begin
-    up_sysref_status_clear = up_wdata[1:0];
-  end else begin
-    up_sysref_status_clear = 2'b00;
+assign mem_rd_en = output_ready&unpacker_ready[0];
+
+always @(posedge link_clk) begin
+  if (mem_rd_en) begin
+    mem_rd_data <= mem[out_addr];
+  end
+  mem_rd_valid <= mem_rd_en;
+end
+
+always @(posedge link_clk) begin
+  if (reset) begin
+    out_addr <= 'b0;
+  end else if (mem_rd_en) begin
+    out_addr <= out_addr + 1;
   end
 end
+
+genvar i;
+generate for (i = 0; i < NUM_LANES; i=i+1) begin: unpacker
+
+ad_upack #(
+  .I_W(IN_DATA_PATH_WIDTH),
+  .O_W(OUT_DATA_PATH_WIDTH),
+  .UNIT_W(8),
+  .O_REG(0)
+) i_ad_upack (
+  .clk(link_clk),
+  .reset(reset),
+  .idata(mem_rd_data[i*IN_DATA_PATH_WIDTH*8+:IN_DATA_PATH_WIDTH*8]),
+  .ivalid(mem_rd_valid),
+  .iready(unpacker_ready[i]),
+
+  .odata(link_data[i*OUT_DATA_PATH_WIDTH*8+:OUT_DATA_PATH_WIDTH*8]),
+  .ovalid()
+);
+
+end
+endgenerate
 
 endmodule
+
