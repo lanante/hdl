@@ -55,6 +55,7 @@ module ad7768_if (
   output  reg             adc_valid_5,
   output  reg             adc_valid_6,
   output  reg             adc_valid_7,
+  output  reg             adc_valid_pp,
   output  reg [ 31:0]     adc_data,
   output  reg [ 31:0]     adc_data_0,
   output  reg [ 31:0]     adc_data_1,
@@ -307,6 +308,8 @@ module ad7768_if (
     adc_valid_5 <= adc_ch_valid_7;
     adc_valid_6 <= adc_ch_valid_7;
     adc_valid_7 <= adc_ch_valid_7;
+    adc_valid_pp <= adc_valid_0 | adc_valid_1 | adc_valid_2 | adc_valid_3 |
+	            adc_valid_4 | adc_valid_5 | adc_valid_6 | adc_valid_7;
     if ((adc_crc_enable == 1'b1) && (adc_crc_scnt_int == 4'd0)) begin
       adc_status[4] <= adc_crc_mismatch_8[7] & adc_enable_int;
       adc_status[3] <= 1'b0;

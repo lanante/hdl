@@ -3,7 +3,7 @@
 
 create_bd_port -dir I adc_clk
 create_bd_port -dir I adc_valid
-create_bd_port -dir I adc_valid_0
+create_bd_port -dir I adc_valid_pp
 create_bd_port -dir I adc_sync
 create_bd_port -dir I -from 31 -to 0 adc_data
 create_bd_port -dir I -from 31 -to 0 adc_data_0
@@ -63,7 +63,7 @@ ad_ip_parameter util_ad7768_adc_pack CONFIG.SAMPLE_DATA_WIDTH 32
 
 ad_connect adc_clk util_ad7768_adc_pack/clk
 ad_connect sys_rstgen/peripheral_reset util_ad7768_adc_pack/reset
-ad_connect adc_valid_0 util_ad7768_adc_pack/fifo_wr_en
+ad_connect adc_valid_pp util_ad7768_adc_pack/fifo_wr_en
 
 for {set i 0} {$i < 8} {incr i} {
   ad_connect adc_data_$i util_ad7768_adc_pack/fifo_wr_data_$i
