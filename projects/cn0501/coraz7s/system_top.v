@@ -79,7 +79,7 @@ module system_top (
 
   wire            adc_clk;
   wire            adc_valid;
-  wire            adc_valid_0;
+  wire            adc_valid_pp;
   wire            adc_sync;
   wire    [31:0]  adc_data;
   wire    [31:0]  adc_data_0;
@@ -112,12 +112,12 @@ module system_top (
   assign up_sshot = gpio_o[36];
   assign up_format = gpio_o[35:34];
   assign up_crc_enable = gpio_o[33];
-  assign up_crc_4_or_16_n = gpio_o[37];
+  assign up_crc_4_or_16_n = gpio_o[32];
 
   // instantiations
 
   assign gpio_i[36:32] = 5'b0;
-  assign gpio_i[39:38] = gpio_o[39:38];
+  assign gpio_i[39:37] = gpio_o[39:37];
   assign gpio_i[47:44] = gpio_o[47:44];
   assign gpio_i[63:53] = gpio_o[63:53];
 
@@ -127,7 +127,7 @@ ad7768_if i_ad7768_if (
     .data_in (data_in),
     .adc_clk (adc_clk),
     .adc_valid (adc_valid),
-    .adc_valid_0 (adc_valid_0),
+    .adc_valid_pp (adc_valid_pp),
     .adc_sync (adc_sync),
     .adc_data (adc_data),
     .adc_data_0 (adc_data_0),
@@ -163,7 +163,7 @@ ad7768_if i_ad7768_if (
     .adc_gpio_1_o (adc_gpio_o[63:32]),
     .adc_gpio_1_t (adc_gpio_t[63:32]),
     .adc_valid (adc_valid),
-    .adc_valid_0 (adc_valid_0),
+    .adc_valid_pp (adc_valid_pp),
     .adc_sync (adc_sync),
     .ddr_addr (ddr_addr),
     .ddr_ba (ddr_ba),
