@@ -46,25 +46,17 @@ module ad7768_if (
   // data path interface
 
   output                  adc_clk,
-  output  reg             adc_valid,
-  output  reg             adc_valid_0,
-  output  reg             adc_valid_1,
-  output  reg             adc_valid_2,
-  output  reg             adc_valid_3,
-  output  reg             adc_valid_4,
-  output  reg             adc_valid_5,
-  output  reg             adc_valid_6,
-  output  reg             adc_valid_7,
-  output  reg             adc_valid_pp,
-  output  reg [ 31:0]     adc_data,
-  output  reg [ 31:0]     adc_data_0,
-  output  reg [ 31:0]     adc_data_1,
+(* mark_debug = "true" *)  output  reg             adc_valid,
+(* mark_debug = "true" *)  output  reg             adc_valid_pp,
+(* mark_debug = "true" *)  output  reg [ 31:0]     adc_data,
+(* mark_debug = "true" *)  output  reg [ 31:0]     adc_data_0,
+(* mark_debug = "true" *)  output  reg [ 31:0]     adc_data_1,
   output  reg [ 31:0]     adc_data_2,
   output  reg [ 31:0]     adc_data_3,
   output  reg [ 31:0]     adc_data_4,
   output  reg [ 31:0]     adc_data_5,
   output  reg [ 31:0]     adc_data_6,
-  output  reg [ 31:0]     adc_data_7,
+(* mark_debug = "true" *)  output  reg [ 31:0]     adc_data_7,
   output                  adc_sync,
 
   // control interface
@@ -117,14 +109,14 @@ module ad7768_if (
   reg     [255:0]   adc_ch_data_d5 = 'd0;
   reg     [255:0]   adc_ch_data_d6 = 'd0;
   reg     [255:0]   adc_ch_data_d7 = 'd0;
-  reg               adc_ch_valid_0 = 'd0;
-  reg               adc_ch_valid_1 = 'd0;
-  reg               adc_ch_valid_2 = 'd0;
-  reg               adc_ch_valid_3 = 'd0;
-  reg               adc_ch_valid_4 = 'd0;
-  reg               adc_ch_valid_5 = 'd0;
-  reg               adc_ch_valid_6 = 'd0;
-  reg               adc_ch_valid_7 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_0 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_1 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_2 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_3 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_4 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_5 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_6 = 'd0;
+(* mark_debug = "true" *)  reg               adc_ch_valid_7 = 'd0;
   reg     [ 31:0]   adc_ch_data_0 = 'd0;
   reg     [ 31:0]   adc_ch_data_1 = 'd0;
   reg     [ 31:0]   adc_ch_data_2 = 'd0;
@@ -155,6 +147,14 @@ module ad7768_if (
   reg     [ 35:0]   adc_status_clr = 'd0;
   reg     [ 35:0]   adc_status_clr_d = 'd0;
   reg               adc_valid_d = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_0 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_1 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_2 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_3 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_4 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_5 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_6 = 'd0;
+(* mark_debug = "true" *)  reg               adc_valid_7 = 'd0;
 
   // internal signals
 
