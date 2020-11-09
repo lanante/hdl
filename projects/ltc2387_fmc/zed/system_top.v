@@ -73,18 +73,15 @@ module system_top (
   inout                   iic_scl,
   inout                   iic_sda,
   
-  output                  out_clk_p,
-  output                  out_clk_n,
+  input                   ref_clk,
+  output                  clk_p,
+  output                  clk_n,
   input                   dco_p,
   input                   dco_n,
-  input                   osc_clk_p,
-  input                   osc_clk_n,
   input                   adc_da_in_n,
   input                   adc_da_in_p,
   input                   adc_db_in_n,
   input                   adc_db_in_p,
-  output                  muxcntrl,
-  output                  mux_en,
   output                  cnv_p,
   output                  cnv_n,
   output                  cnv_en);
@@ -97,6 +94,14 @@ wire    [63:0]  gpio_t;
 
 // instantiations
 
+OBUFTDS #(
+) OBUFTDS_inst (
+    .O(clk_p),
+    .OB(clk_n),
+    .I(ref_clk),
+    .T(clk_en)
+);
+
 ad_iobuf #(.DATA_WIDTH(15)) iobuf_gpio_bd (
   .dio_i (gpio_o[14:0]),
   .dio_o (gpio_i[14:0]),
@@ -105,16 +110,6 @@ ad_iobuf #(.DATA_WIDTH(15)) iobuf_gpio_bd (
 
 assign gpio_i[63:15] = gpio_o[63:15];
 
-IBUFDS i_ibufds_osc_clk (
-  .I (osc_clk_p),
-  .IB (osc_clk_n),
-  .O (osc_clk));
-
-OBUFDS i_obufds_out_clk (
-  .I (out_clk),
-  .O (out_clk_p),
-  .OB (out_clk_n));
-	
 system_wrapper i_system_wrapper (
     .ddr_addr(ddr_addr),
     .ddr_ba(ddr_ba),
@@ -154,14 +149,18 @@ system_wrapper i_system_wrapper (
     .iic_mux_sda_o (iic_mux_sda_o_s),
     .iic_mux_sda_t (iic_mux_sda_t_s),
     .spdif (spdif),
-    .dco_n(dco_n),
-    .dco_p(dco_p),
-//    .osc_clk(osc_clk),
-//    .out_clk(out_clk),
-    .adc_da_in_n(adc_da_in_n),
-    .adc_da_in_p(adc_da_in_p),
-    .adc_db_in_n(adc_db_in_n),
-    .adc_db_in_p(adc_db_in_p),
+    .ref_clk (ref_clk),
+    .clk_p (clk_p),
+    .clk_n (clk_n),
+    .dco_p (dco_p),
+    .dco_n (dco_n),
+    .adc_da_in_n (adc_da_in_n),
+    .adc_da_in_p (adc_da_in_p),
+    .adc_db_in_n (adc_db_in_n),
+    .adc_db_in_p (adc_db_in_p),
+    .cnv_en (cnv_en),
+    .cnv_p (cnv_p),
+    .cnv_n (cnv_n),
     .spi0_clk_i (1'b0),
     .spi0_clk_o (),
     .spi0_csn_0_o (),
