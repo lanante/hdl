@@ -48,15 +48,14 @@ module axi_ltc2387_if #(
 
   // adc interface
   
-  input                   dco_p,
-  input                   dco_n,
-  input                   adc_da_in_p,
-  input                   adc_da_in_n,
-  input                   adc_db_in_p,
-  input                   adc_db_in_n,
-  output                  cnv_p,
-  output                  cnv_n,
-  
+  output                   ref_clk,
+  input                    clk_p,
+  input                    clk_n,
+  output                   dco_p,
+  output                   dco_n,
+  output      [1:0]        adc_data_in_p,
+  output      [1:0]        adc_data_in_n,
+   
   // interface outputs
 
   output                  adc_clk,
@@ -101,12 +100,8 @@ module axi_ltc2387_if #(
   wire        [1:0]       rx_data_a_s;                                                      
   wire        [1:0]       rx_data_b_s;
 
-  always @ (posedge adc_clk)    begin
 
-    
-  end
-
-  always @(posedge adc_clk) begin                                                   
+  always @(posedge clk_p) begin                                                   
     if (adc_clk_cnt < RESOLUTION-1 )                                                    
       begin                                                                        
         adc_clk_cnt <= adc_clk_cnt + 1;     
@@ -117,7 +112,7 @@ module axi_ltc2387_if #(
       end                                                                          
   end 
 
-  always @(posedge adc_clk) begin 
+  always @(posedge clk_p) begin 
     if (adc_clk_cnt < num_dco) begin
       dco_en <= 1'b1;
     end else begin
@@ -125,7 +120,7 @@ module axi_ltc2387_if #(
     end                          
   end  
  
-  always @(posedge adc_clk) begin
+  always @(posedge clk_p) begin
     if (adc_clk_cnt == num_dco + 1) begin
       last_dco <= 1'b1;
     end else begin
@@ -133,7 +128,7 @@ module axi_ltc2387_if #(
     end
   end
 
-  always @(posedge adc_clk or negedge adc_clk) begin     
+  always @(posedge clk_p or negedge clk_p) begin     
     if (dco_en == 1) begin
       clk_p = ~clk_p;  
       #TCLKDCO dco = clk_p;                          
@@ -143,7 +138,7 @@ module axi_ltc2387_if #(
     end
   end
 
-  always @(posedge adc_clk) begin
+  always @(posedge clk_p) begin
     if (last_dco == 1) begin
       adc_data_d <= 18'b0;
       adc_s_data <= 18'b0;
@@ -188,20 +183,24 @@ module axi_ltc2387_if #(
     end
   end
 
+  genvar          l_inst;
+  
+  
   // data interface
 
   generate
+  for (l_inst = 0; l_inst <= 1; l_inst = l_inst + 1) begin : g_adc_if
   ad_data_in #(
     .FPGA_TECHNOLOGY (FPGA_TECHNOLOGY),
     .IODELAY_CTRL (0),
     .IODELAY_GROUP (IO_DELAY_GROUP),
     .REFCLK_FREQUENCY (DELAY_REFCLK_FREQUENCY))
-  i_adc_data_a (
+  i_adc_data (
     .rx_clk (adc_clk),
-    .rx_data_in_p (adc_da_in_p),
-    .rx_data_in_n (adc_da_in_n),
-    .rx_data_p (adc_data_p_s),
-    .rx_data_n (adc_data_n_s),
+    .rx_data_in_p (adc_data_in_p[l_inst]),
+    .rx_data_in_n (adc_data_in_n[l_inst]),
+    .rx_data_p (adc_data_p_s[l_inst]),
+    .rx_data_n (adc_data_n_s[l_inst]),
     .up_clk (up_clk),
     .up_dld (up_dld),
     .up_dwdata (up_dwdata),
@@ -209,27 +208,7 @@ module axi_ltc2387_if #(
     .delay_clk (delay_clk),
     .delay_rst (delay_rst),
     .delay_locked ());
-   endgenerate
-
-  generate
-  ad_data_in #(
-    .FPGA_TECHNOLOGY (FPGA_TECHNOLOGY),
-    .IODELAY_CTRL (0),
-    .IODELAY_GROUP (IO_DELAY_GROUP),
-    .REFCLK_FREQUENCY (DELAY_REFCLK_FREQUENCY))
-  i_adc_data_b (
-    .rx_clk (adc_clk),
-    .rx_data_in_p (adc_db_in_p),
-    .rx_data_in_n (adc_db_in_n),
-    .rx_data_p (adc_data_p_s),
-    .rx_data_n (adc_data_n_s),
-    .up_clk (up_clk),
-    .up_dld (up_dld),
-    .up_dwdata (up_dwdata),
-    .up_drdata (up_drdata),
-    .delay_clk (delay_clk),
-    .delay_rst (delay_rst),
-    .delay_locked ());
+   end
    endgenerate
 
 
@@ -239,8 +218,8 @@ module axi_ltc2387_if #(
   i_adc_clk (
     .rst (1'b0),
     .locked (),
-    .clk_in_p (adc_clk_in_p),
-    .clk_in_n (adc_clk_in_n),
+    .clk_in_p (clk_p),
+    .clk_in_n (clk_n),
     .clk (adc_clk));
 
 endmodule

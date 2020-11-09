@@ -47,6 +47,9 @@ module axi_ltc2387 #(
 
   // adc interface
 
+  input                   ref_clk,
+  output                  clk_p,
+  output                  clk_n,
   input                   dco_p,
   input                   dco_n,
   input                   adc_da_in_p,
@@ -55,6 +58,7 @@ module axi_ltc2387 #(
   input                   adc_db_in_n,
   output                  cnv_p,
   output                  cnv_n,
+  output                  cnv_en,
   
   // delay interface
 
@@ -179,10 +183,14 @@ module axi_ltc2387 #(
     .adc_da_in_n (adc_da_in_n),
     .adc_db_in_p (adc_db_in_p),
     .adc_db_in_n (adc_db_in_n),
+    .ref_clk (ref_clk),
+    .clk_p (clk_p),
+    .clk_p (clk_p),
     .dco_p (dco_p),
     .dco_n (dco_n),
     .cnv_p (cnv_p),
     .cnv_n (cnv_n),
+    .cnv_en (cnv_en),
     .adc_clk (adc_clk),
     .adc_data (adc_data_s),
     .adc_status (adc_status_s),
