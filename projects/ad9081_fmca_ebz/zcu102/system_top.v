@@ -151,7 +151,6 @@ module system_top  #(
   wire [7:0] spi_pmod_csn;
   wire       spi_pmod_clk;
   wire       spi_pmod_mosi;
-  wire       pwr_up;
   wire       sys_clk;
 
   assign pmod0_1_3_MOSI = spi_pmod_mosi;
@@ -274,7 +273,7 @@ module system_top  #(
   assign pmod0_5_4_TX_LOAD     = gpio_o[63];
   assign pmod0_6_6_RX_LOAD     = gpio_o[64];
   assign pmod1_6_6_5V_CTRL     = gpio_o[65];
-  assign pmod1_7_8_PWR_UP_DOWN = pwr_up | gpio_o[66];
+  assign pmod1_7_8_PWR_UP_DOWN = gpio_o[66];
 
   // XUD GPIOs
   assign gpio_i[67] = fmc_bob_xud1_pmod_dip;
@@ -367,15 +366,6 @@ module system_top  #(
 
   assign tx_data_p[TX_JESD_L*TX_NUM_LINKS-1:0] = tx_data_p_loc[TX_JESD_L*TX_NUM_LINKS-1:0];
   assign tx_data_n[TX_JESD_L*TX_NUM_LINKS-1:0] = tx_data_n_loc[TX_JESD_L*TX_NUM_LINKS-1:0];
-
-  // Power up logic
-  // Delay power up with 1.3s
-  assign pwr_up = pwr_up_cnt[25];
-  always @(posedge sys_clk) begin
-    if (pwr_up_cnt[26]) begin
-      pwr_up_cnt <= pwr_up_cnt + 1;
-    end
-  end
 
 endmodule
 
