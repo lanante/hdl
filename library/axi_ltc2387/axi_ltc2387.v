@@ -56,8 +56,7 @@ module axi_ltc2387 #(
   input                   adc_da_in_n,
   input                   adc_db_in_p,
   input                   adc_db_in_n,
-  output                  cnv_p,
-  output                  cnv_n,
+  output                  cnv,
   output                  cnv_en,
   
   // delay interface
@@ -119,9 +118,9 @@ module axi_ltc2387 #(
   wire    [44:0]  up_drdata_s;
   wire            delay_locked_s;
   wire    [13:0]  up_raddr_s;
-  wire    [31:0]  up_rdata_s[0:2];
-  wire            up_rack_s[0:2];
-  wire            up_wack_s[0:2];
+  wire    [31:0]  up_rdata_s[0:1];
+  wire            up_rack_s[0:1];
+  wire            up_wack_s[0:1];
   wire            up_wreq_s;
   wire    [13:0]  up_waddr_s;
   wire    [31:0]  up_wdata_s;
@@ -140,38 +139,12 @@ module axi_ltc2387 #(
       up_rack <= 'd0;
       up_wack <= 'd0;
     end else begin
-      up_rdata <= up_rdata_s[0] | up_rdata_s[1] | up_rdata_s[2];
-      up_rack <= up_rack_s[0] | up_rack_s[1] | up_rack_s[2];
-      up_wack <= up_wack_s[0] | up_wack_s[1] | up_wack_s[2];
+      up_rdata <= up_rdata_s[0] | up_rdata_s[1];
+      up_rack <= up_rack_s[0] | up_rack_s[1];
+      up_wack <= up_wack_s[0] | up_wack_s[1];
     end
   end
 
-  // channel
-
-  axi_ltc2387_channel #(
-    .CHANNEL_ID(0),
-    .DATAPATH_DISABLE (ADC_DATAPATH_DISABLE))
-  i_channel (
-    .adc_clk (adc_clk),
-    .adc_rst (adc_rst),
-    .adc_data (adc_data_s),
-    .adc_or (),
-    .adc_dcfilter_data_out (),
-    .adc_enable (adc_enable),
-    .adc_valid (adc_valid),
-    .up_adc_pn_err (),
-    .up_adc_pn_oos (),
-    .up_adc_or (),
-    .up_rstn (up_rstn),
-    .up_clk (up_clk),
-    .up_wreq (up_wreq_s),
-    .up_waddr (up_waddr_s),
-    .up_wdata (up_wdata_s),
-    .up_wack (up_wack_s[0]),
-    .up_rreq (up_rreq_s),
-    .up_raddr (up_raddr_s),
-    .up_rdata (up_rdata_s[0]),
-    .up_rack (up_rack_s[0]));
 
   // main (device interface)
 
@@ -179,17 +152,12 @@ module axi_ltc2387 #(
     .FPGA_TECHNOLOGY (FPGA_TECHNOLOGY),
     .IO_DELAY_GROUP (IO_DELAY_GROUP))
   i_if (
-    .adc_da_in_p (adc_da_in_p),
-    .adc_da_in_n (adc_da_in_n),
-    .adc_db_in_p (adc_db_in_p),
-    .adc_db_in_n (adc_db_in_n),
     .ref_clk (ref_clk),
     .clk_p (clk_p),
     .clk_p (clk_p),
     .dco_p (dco_p),
     .dco_n (dco_n),
-    .cnv_p (cnv_p),
-    .cnv_n (cnv_n),
+    .cnv (cnv),
     .cnv_en (cnv_en),
     .adc_clk (adc_clk),
     .adc_data (adc_data_s),
@@ -211,63 +179,6 @@ module axi_ltc2387 #(
     .up_dld (up_dld_s),
     .up_dwdata (up_dwdata_s),
     .up_drdata (up_drdata_s),
-    .up_rstn (up_rstn),
-    .up_clk (up_clk),
-    .up_wreq (up_wreq_s),
-    .up_waddr (up_waddr_s),
-    .up_wdata (up_wdata_s),
-    .up_wack (up_wack_s[2]),
-    .up_rreq (up_rreq_s),
-    .up_raddr (up_raddr_s),
-    .up_rdata (up_rdata_s[2]),
-    .up_rack (up_rack_s[2]));
-
-  // common processor control
-
-  up_adc_common #(
-    .ID (ID),
-    .FPGA_TECHNOLOGY (FPGA_TECHNOLOGY),
-    .FPGA_FAMILY (FPGA_FAMILY),
-    .SPEED_GRADE (SPEED_GRADE),
-    .DEV_PACKAGE (DEV_PACKAGE),
-    .CONFIG (0),
-    .COMMON_ID (6'h00),
-    .DRP_DISABLE (6'h00),
-    .USERPORTS_DISABLE (0),
-    .GPIO_DISABLE (0),
-    .START_CODE_DISABLE(0))
-  i_up_adc_common (
-    .mmcm_rst (),
-    .adc_clk (adc_clk),
-    .adc_rst (adc_rst),
-    .adc_r1_mode (),
-    .adc_ddr_edgesel (),
-    .adc_pin_mode (),
-    .adc_status (adc_status_s),
-    .adc_sync_status (1'd0),
-    .adc_status_ovf (adc_dovf),
-    .adc_clk_ratio (32'd1),
-    .adc_start_code (),
-    .adc_sref_sync (),
-    .adc_sync (),
-    .up_pps_rcounter(32'd0),
-    .up_pps_status(1'd0),
-    .up_pps_irq_mask(),
-    .up_adc_ce (),
-    .up_status_pn_err (),
-    .up_status_pn_oos (),
-    .up_status_or (),
-    .up_drp_sel (),
-    .up_drp_wr (),
-    .up_drp_addr (),
-    .up_drp_wdata (),
-    .up_drp_rdata (32'd0),
-    .up_drp_ready (1'd0),
-    .up_drp_locked (1'd1),
-    .up_usr_chanmax_out (),
-    .up_usr_chanmax_in (8'd0),
-    .up_adc_gpio_in (32'd0),
-    .up_adc_gpio_out (),
     .up_rstn (up_rstn),
     .up_clk (up_clk),
     .up_wreq (up_wreq_s),

@@ -11,7 +11,7 @@ GENERIC_DEPS += ../common/up_adc_common.v
 GENERIC_DEPS += ../common/up_axi.v
 GENERIC_DEPS += ../common/up_clock_mon.v
 GENERIC_DEPS += ../common/up_delay_cntrl.v
-GENERIC_DEPS += axi_ltc2387_channel.v
+GENERIC_DEPS += axi_ltc2387.v
 GENERIC_DEPS += axi_ltc2387_if.v
 GENERIC_DEPS += axi_ltc2387_ip.tcl
 
